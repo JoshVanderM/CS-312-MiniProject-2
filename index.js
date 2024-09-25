@@ -15,7 +15,7 @@ app.set('view engine', 'ejs');
 
 // render the main page of the website
 app.get("/", (req, res) => {
-    res.render("index", {city: null, weather: null});
+    res.render("index", {city: null, weather: null, error: null});
 });
 
 // use async so we can use the await call for axios
@@ -29,6 +29,12 @@ app.post("/", async (req, res) => {
         // get the lat and long of the city inputed 
         const geoUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${apiKey}`;
         const geoResponse = await axios.get(geoUrl);
+
+        // Check if geoResponse.data has any results
+        if (!geoResponse.data || geoResponse.data.length === 0) {
+            return res.render("index", { city: null, weather: null, error: "Could not find location. Please try another city." });
+        }
+        
         const lat = geoResponse.data[0].lat;
         const lon = geoResponse.data[0].lon;
     
@@ -44,13 +50,13 @@ app.post("/", async (req, res) => {
             unit: unit,
         };
         // render website with the new data
-        res.render("index", {city, weather});
+        res.render("index", {city, weather, error: null});
     } catch(err) {
         // console log any errors
         console.error(err);
 
         // rerender blank site
-        res.render("index", {city: null, weather: null});
+        res.render("index", {city: null, weather: null,  error: "Could not retrieve weather data. Please try again."});
     }
 });
 
